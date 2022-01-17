@@ -9,6 +9,8 @@ import HashTag from '../../components/HashTag';
 import { dateFormatter } from '../../utils/utils';
 import Toc from '../../components/post/Toc';
 import Comments from '../../components/comment/Comments';
+import useFetch from '../../components/comment/hooks/useFetch';
+import { useRouter } from 'next/router';
 
 interface IMdxProps {
   mdxSource: MDXRemoteSerializeResult;
@@ -229,6 +231,11 @@ export default function Blog({
   frontMatter: { title, description, hashTags, createAt },
   content,
 }: IMdxProps) {
+  const router = useRouter();
+  const {
+    query: { slug },
+  } = router;
+  const commentInfo = useFetch(`http://localhost:4000/posts/${slug}/comments`);
   return (
     <>
       <Seo title={title} description={description} keywords={hashTags} />
@@ -238,7 +245,7 @@ export default function Blog({
           <div>
             <h1>{title}</h1>
             <time dateTime={createAt}>{dateFormatter(createAt)}</time>
-            <HashTag hashTags={hashTags} />
+            <HashTag hashTags={hashTags} isHashTagMenu={false} />
           </div>
         </PostHeader>
         <PostContainer>
@@ -247,7 +254,7 @@ export default function Blog({
           </div>
         </PostContainer>
       </article>
-      <Comments />
+      <Comments {...commentInfo} />
     </>
   );
 }

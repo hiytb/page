@@ -1,4 +1,5 @@
-import React from 'react';
+import { useRouter } from 'next/router';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { dateToTimeFormatter } from '../../utils/utils';
 import CommentInput from './CommentInput';
@@ -8,37 +9,58 @@ interface IProps {
   setComments: React.Dispatch<React.SetStateAction<IComment[]>>;
 }
 
-interface IOnClickCreate {
-  (commentInfo: { name: string; content: string; password: string }): void;
+interface ICreateComment {
+  (commentInfo: { author: string; commentBody: string; password: string }): void;
 }
 
 export default function CommentWrite({ setComments }: IProps) {
-  const onClickCreate: IOnClickCreate = (commentInfo) => {
-    const { content, name, password } = commentInfo;
+  const [isLoading, setIsLoading] = useState(false);
 
-    //TODO: 비밀번호 validation
-    //TODO: axios 백엔드 통신 후 정상 응답 확인
-    //* 댓글 상태 변경 완료
+  const router = useRouter();
+  const {
+    query: { slug },
+  } = router;
 
-    const date = new Date();
-    setComments((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        author: name,
-        createAt: dateToTimeFormatter(date),
-        content,
-        password,
-      },
-    ]);
+  const createComment: ICreateComment = ({ author, commentBody, password }) => {
+    if (!isLoading) {
+      setIsLoading(true);
+      const date = new Date();
+      const newId = Date.now();
+      fetch(`http://localhost:4000/posts/${slug}/comments`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          id: newId,
+          author,
+          commentBody,
+          createAt: dateToTimeFormatter(date),
+          password,
+        }),
+      })
+        .then((res) => {
+          if (res.ok) {
+            setComments((prev) => [
+              ...prev,
+              {
+                id: newId,
+                author,
+                createAt: dateToTimeFormatter(date),
+                commentBody,
+                password,
+              },
+            ]);
+            setIsLoading(false);
+          } else {
+            throw new Error('댓글을 등록하지 못하였습니다 😥');
+          }
+        })
+        .catch((error) => console.log(error));
+    }
   };
 
   return (
     <Container>
-      <CommentInput
-        onSubmit={onClickCreate}
-        initialContent='앗 아직 서버를 연결하지 않았어요ㅠㅠ 도움 주실 분 sjunhwan0901@gmail.com  으로 연락 부탁드립니다!'
-      />
+      <CommentInput onSubmit={createComment} />
     </Container>
   );
 }

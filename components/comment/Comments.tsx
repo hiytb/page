@@ -6,18 +6,25 @@ export interface IComment {
   id: number;
   author: string;
   createAt: string;
-  content: string;
+  commentBody: string;
   password: string;
 }
 
-export default function Comments() {
+interface IProps {
+  payload: {
+    comments: IComment[];
+  };
+  loading: boolean;
+  error: string;
+}
+
+export default function Comments({ payload, loading, error }: IProps) {
   const [comments, setComments] = useState<IComment[]>([]);
   useEffect(() => {
-    //TODO: postId or postSlug 받아서 백엔드에 해당 포스트의 댓글 받아오기
-    //TODO: 정상 status code 면 setComments, 비정상이면 error message 출력
-    // setComments(serverData);
-  }, []);
-
+    if (payload.comments) {
+      setComments(payload.comments);
+    }
+  }, [payload]);
   return (
     <div>
       <CommentWrite setComments={setComments} />

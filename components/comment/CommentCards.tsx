@@ -12,12 +12,17 @@ interface CommentCardsProps {
 export default function CommentCards({ comments, setComments }: CommentCardsProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalInfo, setModalInfo] = useState<IComment>();
+
+  const toggleModal = () => {
+    setIsModalOpen(!isModalOpen);
+  };
+
   return (
     <Container>
       {comments.map((comment) => (
         <Comment key={comment.id}>
           <CommentHeader comment={comment} setModalInfo={setModalInfo} setIsModalOpen={setIsModalOpen} />
-          <p>{comment.content}</p>
+          <p>{comment.commentBody}</p>
         </Comment>
       ))}
       {isModalOpen && modalInfo && (
@@ -25,7 +30,7 @@ export default function CommentCards({ comments, setComments }: CommentCardsProp
           commentInfo={modalInfo}
           isModalOpen={isModalOpen}
           setComments={setComments}
-          setIsModalOpen={setIsModalOpen}
+          toggleModal={toggleModal}
         />
       )}
     </Container>

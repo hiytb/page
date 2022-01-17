@@ -4,73 +4,60 @@ import media from '../../styles/media';
 import { useInput } from './hooks/useInput';
 
 interface CommentInputProps {
-  onSubmit: (commentInfo: { name: string; content: string; password: string }) => void;
+  onSubmit: (commentInfo: { author: string; commentBody: string; password: string }) => void;
   initialName?: string;
-  initialContent?: string;
+  initialBody?: string;
   isModalOpen?: boolean;
   deleteComment?: (password: string) => void;
-  setIsModalOpen?: React.Dispatch<React.SetStateAction<boolean>>;
+  toggleModal?: () => void;
 }
 
 export default function CommentInput({
   onSubmit,
   initialName,
-  initialContent,
+  initialBody,
   isModalOpen,
   deleteComment,
-  setIsModalOpen,
+  toggleModal,
 }: CommentInputProps) {
   const nameValidator = (value: string) => value.length < 3;
   const passwordValidator = (value: string) => value.length < 6;
   const name = useInput(initialName ?? '', nameValidator);
   const password = useInput('', passwordValidator);
-  const content = useInput(initialContent ?? '');
+  const commentBody = useInput(initialBody ?? '');
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    //TODO: input validation 후  문제 있을 시 setError 로 error 메시지 설정 후 input button 에 넣어주기
     event.preventDefault();
-    if (name.value.length < 3 || password.value.length < 6 || content.value.length < 10) {
+    if (name.value.length < 3 || password.value.length < 6 || commentBody.value.length < 10) {
       return;
     }
     const commentInfo = {
-      name: name.value,
-      content: content.value,
+      author: name.value,
+      commentBody: commentBody.value,
       password: password.value,
     };
-    if (!isModalOpen) {
-      name.setValue('');
-      content.setValue('');
-      password.setValue('');
-    }
     onSubmit(commentInfo);
   };
 
-  const handleEditClick = () => {
-    if (deleteComment) {
-      deleteComment(password.value);
-    }
-  };
-
-  const handleCancelClick = () => {
-    if (setIsModalOpen) {
-      setIsModalOpen(false);
-    }
-  };
-
   return (
-    <Form onSubmit={(event) => handleSubmit(event)}>
+    <Form onSubmit={handleSubmit}>
       <InputContainer>
         <Input name='name' {...name} placeholder='이름' type='text' maxLength={15} />
         <Input name='password' {...password} placeholder='비밀번호' type='password' minLength={4} />
       </InputContainer>
       <TextareaWrapper>
-        <textarea {...content} minLength={10} placeholder='내용을 입력해주세요!' />
+        <textarea
+          {...commentBody}
+          minLength={10}
+          placeholder='아직 서버 연결하지 않아서 작동하지 않습니다 😥'
+        />
       </TextareaWrapper>
       <ButtonContainer>
         <SubmmitButton>{isModalOpen ? '수정' : '딸깍'}</SubmmitButton>
-        {isModalOpen && (
+        {isModalOpen && deleteComment && (
           <>
-            <DeleteButton onClick={handleEditClick}>삭제</DeleteButton>
-            <CancelButton onClick={handleCancelClick}>취소</CancelButton>
+            <DeleteButton onClick={() => deleteComment(password.value)}>삭제</DeleteButton>
+            <CancelButton onClick={toggleModal}>취소</CancelButton>
           </>
         )}
       </ButtonContainer>

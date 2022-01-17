@@ -1,71 +1,94 @@
+import { useRouter } from 'next/router';
 import React, { SetStateAction, useEffect } from 'react';
 import styled from 'styled-components';
 import CommentInput from './CommentInput';
 import { IComment } from './Comments';
 
-interface CommentEditModalProps {
+interface IProps {
   commentInfo: IComment;
   isModalOpen: boolean;
   setComments: React.Dispatch<SetStateAction<IComment[]>>;
-  setIsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  toggleModal: () => void;
 }
-interface IOnClickEdit {
-  (commentInfo: { name: string; content: string; password: string }): void;
+interface IEditComment {
+  (commentInfo: { author: string; commentBody: string; password: string }): void;
 }
 
-export default function CommentEditModal({
-  commentInfo,
-  isModalOpen,
-  setComments,
-  setIsModalOpen,
-}: CommentEditModalProps) {
-  const { content, author: name, id: commentId, password: passwords } = commentInfo;
+export default function CommentEditModal({ commentInfo, isModalOpen, setComments, toggleModal }: IProps) {
+  const { id: commentId, author, commentBody } = commentInfo;
+  const router = useRouter();
+  const {
+    query: { slug },
+  } = router;
 
-  const editComment: IOnClickEdit = (commentInfo) => {
-    const { content, name, password } = commentInfo;
-    //TODO: 서버 통신해서 비밀번호 확인, 코멘트 수정
-    //TODO: 함수명 변경 필요
-    //* 서버 정상 응답확인 필요, commentsState 수정하여 코멘트 렌더링 완료
-    //* 프론트에서 비밀번호 비교 x, 서버에서 비교 후 status 값 200이면 변경
-    if (password !== passwords) {
-      return;
-    }
-    setComments((oldComments) => {
-      const targetIndex = oldComments.findIndex((comment) => comment.id === commentId);
-      const newComment = {
-        ...oldComments[targetIndex],
-        author: name,
-        content,
-      };
-      return [...oldComments.slice(0, targetIndex), newComment, ...oldComments.slice(targetIndex + 1)];
-    });
-    setIsModalOpen(false);
+  const url = `http://localhost:4000/posts/${slug}/${commentId}`;
+
+  const editComment: IEditComment = ({ author, commentBody, password }) => {
+    // TODO password validation back-end 로 옮길 예정으로 post method 로 백엔드로 password 함께 보내기
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => data.password)
+      .then((correctPassword) => {
+        if (correctPassword === password) {
+          fetch(url, {
+            method: 'PUT',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              ...commentInfo,
+              commentBody,
+              author,
+            }),
+          }).then((res) => {
+            if (res.ok) {
+              setComments((oldComments) => {
+                const targetIndex = oldComments.findIndex((comment) => comment.id === commentId);
+                const newComment = {
+                  ...oldComments[targetIndex],
+                  author,
+                  commentBody,
+                };
+                return [
+                  ...oldComments.slice(0, targetIndex),
+                  newComment,
+                  ...oldComments.slice(targetIndex + 1),
+                ];
+              });
+            }
+          });
+        }
+      });
+    toggleModal();
   };
 
   const deleteComment = (password: string) => {
-    //TODO: 서버 통신해서 비밀번호 확인, 코멘트 삭제
-    //* 서버 정상 응답확인 필요, commentsState 에서 해당 코멘트 삭제하여 코멘트 렌더링 완료
-    //* 프론트에서 비밀번호 비교 x, 서버에서 비교 후 status 값 200이면 변경
-    if (password !== passwords) {
-      return;
-    }
-    setComments((oldComments) => {
-      const targetIndex = oldComments.findIndex((comment) => comment.id === commentId);
-      return [...oldComments.slice(0, targetIndex), ...oldComments.slice(targetIndex + 1)];
-    });
-    setIsModalOpen(false);
+    // TODO password validation back-end 로 옮길 예정으로 post method 로 백엔드로 password 함께 보내기
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => data.password)
+      .then((correctPassword) => {
+        if (correctPassword === password) {
+          fetch(url, { method: 'DELETE' }).then((res) => {
+            if (res.ok) {
+              setComments((oldComments) => {
+                return oldComments.filter((comment) => comment.id !== commentId);
+              });
+            }
+          });
+        }
+      });
+    toggleModal();
   };
 
   return (
-    <Overlay onClick={() => setIsModalOpen(false)}>
+    <Overlay onClick={toggleModal}>
       <Container onClick={(event) => event.stopPropagation()}>
         <CommentInput
           onSubmit={editComment}
-          initialContent={content}
-          initialName={name}
+          initialBody={commentBody}
+          initialName={author}
           isModalOpen={isModalOpen}
           deleteComment={deleteComment}
-          setIsModalOpen={setIsModalOpen}
+          toggleModal={toggleModal}
         />
       </Container>
     </Overlay>

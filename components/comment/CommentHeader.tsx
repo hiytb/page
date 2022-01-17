@@ -9,8 +9,8 @@ interface IProps {
 }
 
 export default function CommentHeader({ comment, setModalInfo, setIsModalOpen }: IProps) {
-  const handleSetVisible = (comment: IComment) => {
-    setModalInfo({ ...comment });
+  const handleEditClick = (comment: IComment) => {
+    setModalInfo(comment);
     setIsModalOpen(true);
   };
   return (
@@ -19,7 +19,7 @@ export default function CommentHeader({ comment, setModalInfo, setIsModalOpen }:
         <span>{comment.author}</span>
         <time dateTime={comment.createAt}>{dateFormatter(comment.createAt)}</time>
       </CommentHeaderInfo>
-      <CommentEditButton onClick={() => handleSetVisible(comment)}>수정 / 삭제</CommentEditButton>
+      <CommentEditButton onClick={() => handleEditClick(comment)}>수정 / 삭제</CommentEditButton>
     </Container>
   );
 }
